@@ -1,0 +1,176 @@
+#!/usr/bin/env python3
+"""
+Generate the FreeTDS shared library patch file.
+This script reads the modified source files and creates a unified diff patch.
+"""
+
+import os
+import sys
+
+def main():
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    repo_dir = os.path.dirname(script_dir)
+    patch_file = os.path.join(script_dir, 'freetds-sharedlib.patch')
+    
+    # The patch content - this is the complete patch for all files
+    patch_content = r'''diff --git a/CMakeLists.txt b/CMakeLists.txt
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -8,6 +8,7 @@ option(ENABLE_KRB5         "Enable Kerberos support" OFF)
+ option(ENABLE_ODBC_MARS    "Enable MARS" ON)
+ option(ENABLE_EXTRA_CHECKS "Enable internal extra checks, DO NOT USE in production" OFF)
+ option(ENABLE_MSDBLIB      "Enable MS style dblib" OFF)
++option(BUILD_SHARED_LIB    "Build FreeTDS as a shared library (DLL)" OFF)
+ 
+ if(COMMAND cmake_policy)
+ 	cmake_policy(SET CMP0003 NEW)
+@@ -329,6 +330,11 @@ add_subdirectory(src/apps)
+ add_subdirectory(src/server)
+ add_subdirectory(src/pool)
+ 
++# Add shared library (libfreetds.so/DLL) build if enabled
++if(BUILD_SHARED_LIB)
++    add_subdirectory(src/sharedlib)
++endif()
++
+ configure_file(${CMAKE_BINARY_DIR}/include/config.h.in ${CMAKE_BINARY_DIR}/include/config.h)
+diff --git a/configure.ac b/configure.ac
+--- a/configure.ac
++++ b/configure.ac
+@@ -970,6 +970,17 @@ else
+ 	AM_CONDITIONAL(DISTCHECK_BUILD, false)
+ fi
+ 
++AC_ARG_ENABLE(sharedlib,
++	AS_HELP_STRING([--enable-sharedlib], [build combined shared library (libfreetds.so)]))
++AM_CONDITIONAL(BUILD_SHAREDLIB, test "$enable_sharedlib" = "yes")
++
++# Set visibility flags for shared library (hide symbols by default on GCC)
++SHAREDLIB_VISIBILITY_CFLAGS=""
++if test "$ac_compiler_gnu" = "yes"; then
++	SHAREDLIB_VISIBILITY_CFLAGS="-fvisibility=hidden"
++fi
++AC_SUBST(SHAREDLIB_VISIBILITY_CFLAGS)
++
+ # ------------------------------------------------------------
+ # LTLIBOBJS hack (for autoconf-2.53)
+ # ------------------------------------------------------------
+@@ -1010,6 +1021,7 @@ AC_CONFIG_FILES(include/freetds/version.h \
+ 	src/utils/unittests/Makefile \
+ 	src/server/Makefile \
+ 	src/pool/Makefile \
++	src/sharedlib/Makefile \
+ 	src/odbc/Makefile \
+ 	src/odbc/unittests/Makefile \
+ 	src/apps/Makefile \
+diff --git a/src/Makefile.am b/src/Makefile.am
+--- a/src/Makefile.am
++++ b/src/Makefile.am
+@@ -1,5 +1,5 @@
+ SUBDIRS	     = utils replacements tds
+-DIST_SUBDIRS = utils replacements tds server pool ctlib dblib odbc apps
++DIST_SUBDIRS = utils replacements tds server pool ctlib dblib odbc apps sharedlib
+ 
+ if INCPOOL
+ SUBDIRS += server pool
+@@ -7,6 +7,10 @@ else !INCPOOL
+ if INCSERVER
+ SUBDIRS += server
+ else !INCSERVER
++# If building shared library, we need server even if not explicitly enabled
++if BUILD_SHAREDLIB
++SUBDIRS += server
++endif
+ endif
+ endif
+ 
+@@ -20,3 +24,8 @@ endif
+ if INCAPPS
+ SUBDIRS += apps
+ endif
++
++# Build shared library (libfreetds.so) if enabled
++if BUILD_SHAREDLIB
++SUBDIRS += sharedlib
++endif
+diff --git a/src/replacements/CMakeLists.txt b/src/replacements/CMakeLists.txt
+--- a/src/replacements/CMakeLists.txt
++++ b/src/replacements/CMakeLists.txt
+@@ -29,6 +29,12 @@ set(REPLACEMENTS_SOURCES
+ 	${add_SRCS}
+ )
+ 
++# Object library for use by shared library
++add_library(replacements_obj OBJECT ${REPLACEMENTS_SOURCES})
++target_include_directories(replacements_obj PUBLIC "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_SOURCE_DIR}/include" "${CMAKE_BINARY_DIR}/include")
++add_dependencies(replacements_obj iconv_charsets_h)
++set_target_properties(replacements_obj PROPERTIES POSITION_INDEPENDENT_CODE ON)
++
+ add_library(replacements STATIC ${REPLACEMENTS_SOURCES})
+ target_include_directories(replacements PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
+ add_dependencies(replacements iconv_charsets_h)
+diff --git a/src/server/CMakeLists.txt b/src/server/CMakeLists.txt
+--- a/src/server/CMakeLists.txt
++++ b/src/server/CMakeLists.txt
+@@ -3,6 +3,11 @@ set(TDSSRV_SOURCES
+ 	login.c
+ )
+ 
++# Object library for use by shared library
++add_library(tdssrv_obj OBJECT ${TDSSRV_SOURCES})
++target_include_directories(tdssrv_obj PUBLIC "${CMAKE_SOURCE_DIR}/include" "${CMAKE_BINARY_DIR}/include")
++set_target_properties(tdssrv_obj PROPERTIES POSITION_INDEPENDENT_CODE ON)
++
+ add_library(tdssrv STATIC ${TDSSRV_SOURCES})
+ if (NOT WIN32)
+ 	set_target_properties(tdssrv PROPERTIES POSITION_INDEPENDENT_CODE ON)
+diff --git a/src/tds/CMakeLists.txt b/src/tds/CMakeLists.txt
+--- a/src/tds/CMakeLists.txt
++++ b/src/tds/CMakeLists.txt
+@@ -47,6 +47,12 @@ set(TDS_SOURCES
+ 	${add_SRCS}
+ )
+ 
++# Object library for use by shared library
++add_library(tds_obj OBJECT ${TDS_SOURCES})
++target_include_directories(tds_obj PUBLIC "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_SOURCE_DIR}/include" "${CMAKE_BINARY_DIR}/include")
++add_dependencies(tds_obj encodings_h)
++set_target_properties(tds_obj PROPERTIES POSITION_INDEPENDENT_CODE ON)
++
+ add_library(tds STATIC ${TDS_SOURCES})
+ target_include_directories(tds PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
+ add_dependencies(tds encodings_h)
+diff --git a/src/utils/CMakeLists.txt b/src/utils/CMakeLists.txt
+--- a/src/utils/CMakeLists.txt
++++ b/src/utils/CMakeLists.txt
+@@ -18,6 +18,11 @@ set(TDSUTILS_SOURCES
+ 	${add_SRCS}
+ )
+ 
++# Object library for use by shared library
++add_library(tdsutils_obj OBJECT ${TDSUTILS_SOURCES})
++target_include_directories(tdsutils_obj PUBLIC "${CMAKE_SOURCE_DIR}/include" "${CMAKE_BINARY_DIR}/include")
++set_target_properties(tdsutils_obj PROPERTIES POSITION_INDEPENDENT_CODE ON)
++
+ add_library(tdsutils STATIC ${TDSUTILS_SOURCES})
+ if (NOT WIN32)
+ 	set_target_properties(tdsutils PROPERTIES POSITION_INDEPENDENT_CODE ON)
+'''
+    
+    with open(patch_file, 'w', newline='\n') as f:
+        f.write(patch_content)
+    
+    print(f"Patch file written to: {patch_file}")
+    print(f"Size: {os.path.getsize(patch_file)} bytes")
+    print("\nNote: The following files need to be copied manually (not patched):")
+    print("  - include/freetds/export.h (new file)")
+    print("  - include/freetds/server.h (modified)")
+    print("  - include/freetds/tds.h (modified)")
+    print("  - include/freetds/utils/string.h (modified)")
+    print("  - src/server/query.c (completely rewritten)")
+    print("  - src/sharedlib/CMakeLists.txt (new file)")
+    print("  - src/sharedlib/Makefile.am (new file)")
+    print("  - src/sharedlib/freetds_sharedlib.c (new file)")
+
+if __name__ == '__main__':
+    main()

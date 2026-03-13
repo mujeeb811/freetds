@@ -136,7 +136,8 @@ AC_CHECK_PROG(ODBC_CONFIG,odbc_config,odbc_config)
 # Check for git-only sources.
 # ------------------------------------------------------------
 #
-# Distribution tarballs include some generated files.  These
+# Distribution tarballs include some
+# generated files.  These
 # files are not maintained in git, but their bases are, and
 # the bases are not in the tarball.  For example, num_limits.h
 # is distributed, but it is generated from numeric.pl, which
@@ -433,7 +434,7 @@ AC_EGREP_CPP(yes,
 TYPE_SOCKLEN_T
 
 AC_MSG_CHECKING([whether getopt has optreset support])
-AC_LINK_IFELSE([AC_LANG_PROGRAM([[#ifdef HAVE_GETOPT_H
+AC_LINK_IF_ELSE([AC_LANG_PROGRAM([[#ifdef HAVE_GETOPT_H
 #include <getopt.h>
 #endif]], [[optreset = 0;]])],
 [AC_MSG_RESULT(yes)
@@ -476,7 +477,7 @@ if test "$GCC" = yes; then
 		AC_MSG_CHECKING([whether we can use $freetds_ldflag])
 		saved_LDFLAGS=$LDFLAGS
 		LDFLAGS="$LDFLAGS $freetds_ldflag"
-		AC_LINK_IFELSE([AC_LANG_PROGRAM([],[])],
+		AC_LINK_IF_ELSE([AC_LANG_PROGRAM([],[])],
 			[ac_cv_use_freetds_flag="yes"],
 			[ac_cv_use_freetds_flag="no"])
 		LDFLAGS=$saved_LDFLAGS
@@ -486,7 +487,7 @@ if test "$GCC" = yes; then
 			break;
 		fi
 	done
-	AC_COMPILE_IFELSE([AC_LANG_SOURCE([static void __attribute__((destructor)) my_uninit(void) {}])],
+	AC_COMPILE_IF_ELSE([AC_LANG_SOURCE([static void __attribute__((destructor)) my_uninit(void) {}])],
 			  AC_DEFINE(TDS_ATTRIBUTE_DESTRUCTOR, 1,
 				    [Define to 1 if your compiler supports __attribute__((destructor)).]))
 fi
@@ -513,7 +514,7 @@ AC_DEFINE(HAVE_SYSTEM, 1, [Define to 1 if you have the 'system' function]))
 ACX_PUSH_LIBS("$LIBS $NETWORK_LIBS")
 AC_CHECK_FUNCS([inet_ntoa_r getipnodebyaddr getipnodebyname \
 getaddrinfo inet_ntop gethostname poll socketpair strtok_s])
-AC_LINK_IFELSE([AC_LANG_PROGRAM([[#ifdef HAVE_SYS_TYPES_H
+AC_LINK_IF_ELSE([AC_LANG_PROGRAM([[#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
 #ifdef HAVE_SYS_SOCKET_H
@@ -730,13 +731,13 @@ then
 	# test for SQLLEN (iODBC do not define but typedef it)
 	save_cppflags="$CPPFLAGS"
 	CPPFLAGS="$CPPFLAGS $ODBC_INC"
-	AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#if defined(_WIN32) || defined(WIN32) || defined(__MINGW32__)
+	AC_COMPILE_IF_ELSE([AC_LANG_PROGRAM([[#if defined(_WIN32) || defined(WIN32) || defined(__MINGW32__)
 #include <windows.h>
 #endif
 #include <sql.h>]], [[SQLLEN len = 123;]])],
 		AC_DEFINE(HAVE_SQLLEN, 1, [Define if sqltypes.h define SQLLEN])
 		# check SQLColAttribute definition
-		AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#if defined(_WIN32) || defined(WIN32) || defined(__MINGW32__)
+		AC_COMPILE_IF_ELSE([AC_LANG_PROGRAM([[#if defined(_WIN32) || defined(WIN32) || defined(__MINGW32__)
 #include <windows.h>
 #endif
 #include <sql.h>
@@ -750,7 +751,7 @@ SQLRETURN  SQL_API SQLColAttribute (SQLHSTMT StatementHandle,
 		AC_DEFINE(TDS_SQLCOLATTRIBUTE_SQLLEN, 1, [Define to 1 if last argument of SQLColAttribute it's SQLLEN *]))
 
 		# check is SQLParamOptions accept SQLULEN
-		AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#if defined(_WIN32) || defined(WIN32) || defined(__MINGW32__)
+		AC_COMPILE_IF_ELSE([AC_LANG_PROGRAM([[#if defined(_WIN32) || defined(WIN32) || defined(__MINGW32__)
 #include <windows.h>
 #endif
 #include <sql.h>
@@ -788,7 +789,7 @@ AC_SUBST(ODBC_LDFLAGS)
 AC_SUBST(ODBCINST_LDFLAGS)
 
 AC_DEFUN([TDS_CHECK_GMP], [
-AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <stdio.h>
+AC_LINK_IF_ELSE([AC_LANG_PROGRAM([[#include <stdio.h>
 #include <gmp.h>]],
 [[mpz_t x; mpz_init(x); mpz_powm(x,x,x,x); mpz_clear(x); return 0;]])],
 AC_DEFINE(HAVE_GMP, 1, [Define if you have GMP library]),
@@ -904,7 +905,7 @@ AC_tds_FUNC_WHICH_GETPWUID_R
 AC_tds_FUNC_WHICH_LOCALTIME_R
 
 # easy test for pthread (no library, only mutex support)
-AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <pthread.h>
+AC_LINK_IF_ELSE([AC_LANG_PROGRAM([[#include <pthread.h>
 #if !defined(_WIN32)
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif]],
@@ -912,7 +913,7 @@ pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_unlock(&mutex)]])], AC_DEFINE(TDS_HAVE_PTHREAD_MUTEX, 1, [Define if you have pthread with mutex support]))
 
 # easy test for locking stdio
-AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <stdio.h>]],
+AC_LINK_IF_ELSE([AC_LANG_PROGRAM([[#include <stdio.h>]],
 [[int c;
 flockfile(stdin);
 c = getc_unlocked(stdin);
@@ -969,6 +970,18 @@ else
 	AM_CONDITIONAL(DISTCHECK_BUILD, false)
 fi
 
+AC_ARG_ENABLE(sharedlib,
+	AS_HELP_STRING([--enable-sharedlib], [build combined shared library (libfreetds.so)]))
+AM_CONDITIONAL(BUILD_SHAREDLIB, test "$enable_sharedlib" = "yes")
+
+# Set visibility flags for shared library (hide symbols by default on GCC)
+# Public symbols must be marked with TDS_EXPORT
+SHAREDLIB_VISIBILITY_CFLAGS=""
+if test "$ac_compiler_gnu" = "yes"; then
+	SHAREDLIB_VISIBILITY_CFLAGS="-fvisibility=hidden"
+fi
+AC_SUBST(SHAREDLIB_VISIBILITY_CFLAGS)
+
 # ------------------------------------------------------------
 # LTLIBOBJS hack (for autoconf-2.53)
 # ------------------------------------------------------------
@@ -1009,6 +1022,7 @@ AC_CONFIG_FILES(include/freetds/version.h \
 	src/utils/unittests/Makefile \
 	src/server/Makefile \
 	src/pool/Makefile \
+	src/sharedlib/Makefile \
 	src/odbc/Makefile \
 	src/odbc/unittests/Makefile \
 	src/apps/Makefile \

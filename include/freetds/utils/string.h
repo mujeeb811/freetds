@@ -21,6 +21,7 @@
 #define _tdsguard_d2McTbRS3vmVcq0ls4BzwH_
 
 #include <freetds/macros.h>
+#include <freetds/export.h>
 
 #include <freetds/pushvis.h>
 
@@ -95,7 +96,7 @@ void tds_dstr_zero(DSTR * s);
 void tds_dstr_free(DSTR * s);
 
 DSTR* tds_dstr_dup(DSTR * s, const DSTR * src) TDS_WUR;
-DSTR* tds_dstr_copy(DSTR * s, const char *src) TDS_WUR;
+TDS_EXPORT DSTR* tds_dstr_copy(DSTR * s, const char *src) TDS_WUR;
 DSTR* tds_dstr_copyn(DSTR * s, const char *src, size_t length) TDS_WUR;
 DSTR* tds_dstr_set(DSTR * s, char *src) TDS_WUR;
 

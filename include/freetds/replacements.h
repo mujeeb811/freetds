@@ -55,15 +55,22 @@ extern "C"
 {
 #endif
 
+/* These functions are always compiled and available in the replacements library.
+ * We always declare them, but only define macros to redirect standard names
+ * when the system doesn't provide native implementations.
+ */
+
+/* tds_asprintf - always available */
+TDS_EXPORT int tds_asprintf(char **ret, const char *fmt, ...);
 #if !HAVE_ASPRINTF
 #undef asprintf
-TDS_EXPORT int tds_asprintf(char **ret, const char *fmt, ...);
 #define asprintf tds_asprintf
 #endif /* !HAVE_ASPRINTF */
 
+/* tds_vasprintf - always available */
+TDS_EXPORT int tds_vasprintf(char **ret, const char *fmt, va_list ap);
 #if !HAVE_VASPRINTF
 #undef vasprintf
-TDS_EXPORT int tds_vasprintf(char **ret, const char *fmt, va_list ap);
 #define vasprintf tds_vasprintf
 #endif /* !HAVE_VASPRINTF */
 
@@ -85,8 +92,9 @@ TDS_EXPORT char *tds_strsep(char **stringp, const char *delim);
 #define strsep tds_strsep
 #endif /* !HAVE_STRSEP */
 
-#if !HAVE_STRLCPY
+/* tds_strlcpy - always available */
 TDS_EXPORT size_t tds_strlcpy(char *dest, const char *src, size_t len);
+#if !HAVE_STRLCPY
 #undef strlcpy
 #define strlcpy(d,s,l) tds_strlcpy(d,s,l)
 #endif
@@ -116,8 +124,9 @@ TDS_EXPORT void tds_freeaddrinfo(struct tds_addrinfo *addr);
 #define AI_FQDN 0
 #endif
 
-#if !HAVE_STRLCAT
+/* tds_strlcat - always available */
 TDS_EXPORT size_t tds_strlcat(char *dest, const char *src, size_t len);
+#if !HAVE_STRLCAT
 #undef strlcat
 #define strlcat(d,s,l) tds_strlcat(d,s,l)
 #endif

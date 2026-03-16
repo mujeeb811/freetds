@@ -17,12 +17,17 @@ lib_LTLIBRARIES = libfreetds.la
 libfreetds_la_SOURCES = freetds_sharedlib.c
 
 # Link all the component libraries
-# Note: Order matters - dependencies should come after dependents
+# Important: Only link the top-level convenience libraries directly.
+# Do NOT list libraries that are already linked by other libraries here,
+# as that causes multiple definition errors.
+# Dependency chain:
+#   libtds.la - standalone
+#   libtdsutils.la - standalone  
+#   libreplacements.la -> libtdsutils.la
+#   libtdssrv.la -> libtds.la, libreplacements.la
+# So we only need libtdssrv.la (which pulls in everything)
 libfreetds_la_LIBADD = \
-	../tds/libtds.la \
 	../server/libtdssrv.la \
-	../replacements/libreplacements.la \
-	../utils/libtdsutils.la \
 	$(NETWORK_LIBS) \
 	$(LTLIBICONV) \
 	$(FREETDS_LIBGCC) \

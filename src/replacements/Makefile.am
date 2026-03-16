@@ -8,22 +8,20 @@ libreplacements_la_SOURCES = \
 	poll.c \
 	socketpair.c \
 	getaddrinfo.c \
+	asprintf.c \
+	vasprintf.c \
+	strlcpy.c \
+	strlcat.c \
 	$(NULL)
 
 libreplacements_la_LDFLAGS =
 libreplacements_la_LIBADD = @LTLIBOBJS@ ../utils/libtdsutils.la
 EXTRA_DIST = \
-	asprintf.c \
 	basename.c \
 	getopt.c \
 	readpassphrase.c \
-	strlcat.c \
-	getaddrinfo.c \
-	strlcpy.c \
 	strtok_r.c \
 	strsep.c \
-	vasprintf.c \
-	socketpair.c \
 	daemon.c \
 	setenv.c \
 	CMakeLists.txt \

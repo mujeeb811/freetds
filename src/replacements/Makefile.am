@@ -12,6 +12,7 @@ libreplacements_la_SOURCES = \
 	vasprintf.c \
 	strlcpy.c \
 	strlcat.c \
+	readpassphrase.c \
 	$(NULL)
 
 libreplacements_la_LDFLAGS =
@@ -19,7 +20,6 @@ libreplacements_la_LIBADD = @LTLIBOBJS@ ../utils/libtdsutils.la
 EXTRA_DIST = \
 	basename.c \
 	getopt.c \
-	readpassphrase.c \
 	strtok_r.c \
 	strsep.c \
 	daemon.c \

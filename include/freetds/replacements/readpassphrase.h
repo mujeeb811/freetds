@@ -36,28 +36,45 @@
 #error should include config.h before
 #endif
 
+#include <freetds/export.h>
+
 #ifdef HAVE_READPASSPHRASE
-
 # include <readpassphrase.h>
-
-#else /* !HAVE_READPASSPHRASE */
+#endif
 
 #include <freetds/pushvis.h>
 
+/* RPP flags - always define these */
+#ifndef RPP_ECHO_OFF
 #define RPP_ECHO_OFF    0x00		/* Turn off echo (default). */
+#endif
+#ifndef RPP_ECHO_ON
 #define RPP_ECHO_ON     0x01		/* Leave echo on. */
+#endif
+#ifndef RPP_REQUIRE_TTY
 #define RPP_REQUIRE_TTY 0x02		/* Fail if there is no tty. */
+#endif
+#ifndef RPP_FORCELOWER
 #define RPP_FORCELOWER  0x04		/* Force input to lower case. */
+#endif
+#ifndef RPP_FORCEUPPER
 #define RPP_FORCEUPPER  0x08		/* Force input to upper case. */
+#endif
+#ifndef RPP_SEVENBIT
 #define RPP_SEVENBIT    0x10		/* Strip the high bit from input. */
+#endif
+#ifndef RPP_STDIN
 #define RPP_STDIN       0x20		/* Read from stdin, not /dev/tty */
+#endif
 
+/* tds_readpassphrase is always available */
+TDS_EXPORT char * tds_readpassphrase(const char *, char *, size_t, int);
+
+#ifndef HAVE_READPASSPHRASE
 #undef readpassphrase
-char * tds_readpassphrase(const char *, char *, size_t, int);
 #define readpassphrase tds_readpassphrase
+#endif
 
 #include <freetds/popvis.h>
-
-#endif /* !HAVE_READPASSPHRASE */
 
 #endif /* !_tdsguard_bkwzvYqnksBiqA9Zb1TtWU_ */

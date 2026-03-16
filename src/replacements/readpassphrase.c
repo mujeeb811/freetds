@@ -28,7 +28,7 @@ static const char rcsid[] = "$OpenBSD: readpassphrase.c,v 1.16 2003/06/17 21:56:
 
 #include <config.h>
 
-#ifndef HAVE_READPASSPHRASE
+/* Always compile tds_readpassphrase */
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -268,5 +268,3 @@ tds_readpassphrase(const char *prompt, char *buf, size_t bufsiz, int flags)
 }
  
 #endif /* _WIN32 */
-
-#endif /* HAVE_READPASSPHRASE */

@@ -99,6 +99,11 @@ BIO_get_data(const BIO *b)
 #define TLS_ST_OK SSL_ST_OK
 #endif
 
+/* OpenSSL 3.0 deprecated SSL_get_peer_certificate, use new name if available */
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+#define SSL_get_peer_certificate SSL_get1_peer_certificate
+#endif
+
 #define SSL_RET int
 #define SSL_PULL_ARGS BIO *bio, char *data, int len
 #define SSL_PUSH_ARGS BIO *bio, const char *data, int len

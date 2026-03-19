@@ -46,7 +46,9 @@
 #define IOCTLSOCKET(a,b,c)	ioctlsocket((a), (b), (char*)(c))
 #define SOCKLEN_T int
 #define select select_s
+#if !defined(_PID_T_) && !defined(_PID_T_DECLARED)
 typedef int pid_t;
+#endif
 #define strcasecmp stricmp
 #define strncasecmp strnicmp
 /* TODO this has nothing to do with ip ... */
@@ -84,7 +86,7 @@ tds_socket_done(void)
 #define set_sock_errno(err) WSASetLastError(err)
 #define sock_strerror(n) tds_prwsaerror(n)
 #define sock_strerror_free(s) tds_prwsaerror_free(s)
-#ifndef __MINGW32__
+#if !defined(__MINGW32__) && !defined(_PID_T_) && !defined(_PID_T_DECLARED)
 typedef DWORD pid_t;
 #endif
 #undef strcasecmp

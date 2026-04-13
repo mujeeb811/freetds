@@ -56,6 +56,11 @@
 #include <freetds/server.h>
 #include <freetds/utils.h>
 
+/* Force IPv4-only to ensure cross-platform compatibility (e.g., Linux client to Windows server).
+ * This must be placed AFTER all socket headers since they define AF_INET6.
+ */
+#undef AF_INET6
+
 unsigned char *
 tds7_decrypt_pass(const unsigned char *crypt_pass, int len, unsigned char *clear_pass)
 {

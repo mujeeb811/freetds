@@ -6,7 +6,7 @@ else(WIN32)
 	set(add_SRCS md4.c md5.c des.c hmac_md5.c)
 endif(WIN32)
 
-add_library(tdsutils STATIC
+set(TDSUTILS_SOURCES
 	dlist.c
 	getpassarg.c
 	sleep.c
@@ -21,6 +21,13 @@ add_library(tdsutils STATIC
 	path.c
 	${add_SRCS}
 )
+
+# Object library for use by shared library
+add_library(tdsutils_obj OBJECT ${TDSUTILS_SOURCES})
+target_include_directories(tdsutils_obj PUBLIC "${CMAKE_SOURCE_DIR}/include" "${CMAKE_BINARY_DIR}/include")
+set_target_properties(tdsutils_obj PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+add_library(tdsutils STATIC ${TDSUTILS_SOURCES})
 if (NOT WIN32)
 	set_target_properties(tdsutils PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()

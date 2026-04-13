@@ -27,7 +27,7 @@ foreach(func ${FUNCS})
 	endif()
 endforeach(func)
 
-add_library(replacements STATIC
+set(REPLACEMENTS_SOURCES
 	iconv.c
 	gettimeofday.c
 	poll.c
@@ -35,6 +35,14 @@ add_library(replacements STATIC
 	getaddrinfo.c
 	${add_SRCS}
 )
+
+# Object library for use by shared library
+add_library(replacements_obj OBJECT ${REPLACEMENTS_SOURCES})
+target_include_directories(replacements_obj PUBLIC "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_SOURCE_DIR}/include" "${CMAKE_BINARY_DIR}/include")
+add_dependencies(replacements_obj iconv_charsets_h)
+set_target_properties(replacements_obj PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+add_library(replacements STATIC ${REPLACEMENTS_SOURCES})
 target_include_directories(replacements PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
 add_dependencies(replacements iconv_charsets_h)
 if (NOT WIN32)

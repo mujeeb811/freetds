@@ -19,7 +19,8 @@
 
 #ifndef _tdsguard_gt6cowOjOuyOf2Og3Ypj8u_
 #define _tdsguard_gt6cowOjOuyOf2Og3Ypj8u_
-#endif
+
+#include <freetds/export.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -30,34 +31,39 @@ extern "C"
 #endif
 
 /* login.c */
-unsigned char *tds7_decrypt_pass(const unsigned char *crypt_pass, int len, unsigned char *clear_pass);
-TDSSOCKET *tds_listen(TDSCONTEXT * ctx, int ip_port);
-int tds_read_login(TDSSOCKET * tds, TDSLOGIN * login);
-int tds7_read_login(TDSSOCKET * tds, TDSLOGIN * login);
-TDSLOGIN *tds_alloc_read_login(TDSSOCKET * tds);
+TDS_EXPORT unsigned char *tds7_decrypt_pass(const unsigned char *crypt_pass, int len, unsigned char *clear_pass);
+TDS_EXPORT TDSSOCKET *tds_listen(TDSCONTEXT * ctx, int ip_port);
+TDS_EXPORT int tds_read_login(TDSSOCKET * tds, TDSLOGIN * login);
+TDS_EXPORT int tds7_read_login(TDSSOCKET * tds, TDSLOGIN * login);
+TDS_EXPORT TDSLOGIN *tds_alloc_read_login(TDSSOCKET * tds);
 
 /* query.c */
-char *tds_get_query(TDSSOCKET * tds);
-char *tds_get_generic_query(TDSSOCKET * tds);
-void tds_free_query(void);
+/** Flag for tds_get_generic_query_ex() to preserve NUL bytes in query data (for binary data) */
+#define TDS_GENERIC_QUERY_FLAG_BINARY_SAFE 0x01
+
+TDS_EXPORT char *tds_get_query(TDSSOCKET * tds);
+TDS_EXPORT char *tds_get_generic_query(TDSSOCKET * tds);
+TDS_EXPORT char *tds_get_generic_query_ex(TDSSOCKET * tds, int flags, size_t *out_len);
+TDS_EXPORT size_t tds_get_generic_query_len(void);
+TDS_EXPORT void tds_free_query(void);
 
 /* server.c */
-void tds_env_change(TDSSOCKET * tds, int type, const char *oldvalue, const char *newvalue);
-void tds_send_msg(TDSSOCKET * tds, int msgno, int msgstate, int severity, const char *msgtext, const char *srvname,
+TDS_EXPORT void tds_env_change(TDSSOCKET * tds, int type, const char *oldvalue, const char *newvalue);
+TDS_EXPORT void tds_send_msg(TDSSOCKET * tds, int msgno, int msgstate, int severity, const char *msgtext, const char *srvname,
 		  const char *procname, int line);
-void tds_send_login_ack(TDSSOCKET * tds, const char *progname);
-void tds_send_eed(TDSSOCKET * tds, int msgno, int msgstate, int severity, const char *msgtext, const char *srvname,
+TDS_EXPORT void tds_send_login_ack(TDSSOCKET * tds, const char *progname);
+TDS_EXPORT void tds_send_eed(TDSSOCKET * tds, int msgno, int msgstate, int severity, const char *msgtext, const char *srvname,
 		  const char *procname, int line, const char *sqlstate);
-void tds_send_err(TDSSOCKET * tds, int msgno, int msgstate, int severity, const char *msgtext, const char *srvname,
+TDS_EXPORT void tds_send_err(TDSSOCKET * tds, int msgno, int msgstate, int severity, const char *msgtext, const char *srvname,
 		  const char *procname, int line);
-void tds_send_capabilities_token(TDSSOCKET * tds);
+TDS_EXPORT void tds_send_capabilities_token(TDSSOCKET * tds);
 /* TODO remove, use tds_send_done */
-void tds_send_done_token(TDSSOCKET * tds, TDS_SMALLINT flags, TDS_INT numrows);
-void tds_send_done(TDSSOCKET * tds, int token, TDS_SMALLINT flags, TDS_INT numrows);
-void tds_send_control_token(TDSSOCKET * tds, TDS_SMALLINT numcols);
-TDSRET tds_send_table_header(TDSSOCKET * tds, TDSRESULTINFO * resinfo);
-TDSRET tds_send_row(TDSSOCKET * tds, TDSRESULTINFO * resinfo);
-void tds71_send_prelogin(TDSSOCKET * tds);
+TDS_EXPORT void tds_send_done_token(TDSSOCKET * tds, TDS_SMALLINT flags, TDS_INT numrows);
+TDS_EXPORT void tds_send_done(TDSSOCKET * tds, int token, TDS_SMALLINT flags, TDS_INT numrows);
+TDS_EXPORT void tds_send_control_token(TDSSOCKET * tds, TDS_SMALLINT numcols);
+TDS_EXPORT TDSRET tds_send_table_header(TDSSOCKET * tds, TDSRESULTINFO * resinfo);
+TDS_EXPORT TDSRET tds_send_row(TDSSOCKET * tds, TDSRESULTINFO * resinfo);
+TDS_EXPORT void tds71_send_prelogin(TDSSOCKET * tds);
 
 #if 0
 {
@@ -65,3 +71,5 @@ void tds71_send_prelogin(TDSSOCKET * tds);
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* _tdsguard_gt6cowOjOuyOf2Og3Ypj8u_ */

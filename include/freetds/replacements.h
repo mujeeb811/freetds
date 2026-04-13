@@ -27,6 +27,7 @@
 #include <stdarg.h>
 #include "tds_sysdep_public.h"
 #include <freetds/sysdep_private.h>
+#include <freetds/export.h>
 
 #include <freetds/replacements/readpassphrase.h>
 
@@ -54,15 +55,22 @@ extern "C"
 {
 #endif
 
+/* These functions are always compiled and available in the replacements library.
+ * We always declare them, but only define macros to redirect standard names
+ * when the system doesn't provide native implementations.
+ */
+
+/* tds_asprintf - always available */
+TDS_EXPORT int tds_asprintf(char **ret, const char *fmt, ...);
 #if !HAVE_ASPRINTF
 #undef asprintf
-int tds_asprintf(char **ret, const char *fmt, ...);
 #define asprintf tds_asprintf
 #endif /* !HAVE_ASPRINTF */
 
+/* tds_vasprintf - always available */
+TDS_EXPORT int tds_vasprintf(char **ret, const char *fmt, va_list ap);
 #if !HAVE_VASPRINTF
 #undef vasprintf
-int tds_vasprintf(char **ret, const char *fmt, va_list ap);
 #define vasprintf tds_vasprintf
 #endif /* !HAVE_VASPRINTF */
 
@@ -73,19 +81,20 @@ int tds_vasprintf(char **ret, const char *fmt, va_list ap);
 #if defined(_WIN32) && HAVE_STRTOK_S
 #define strtok_r strtok_s
 #else
-char *tds_strtok_r(char *str, const char *sep, char **lasts);
+TDS_EXPORT char *tds_strtok_r(char *str, const char *sep, char **lasts);
 #define strtok_r tds_strtok_r
 #endif
 #endif /* !HAVE_STRTOK_R */
 
 #if !HAVE_STRSEP
 #undef strsep
-char *tds_strsep(char **stringp, const char *delim);
+TDS_EXPORT char *tds_strsep(char **stringp, const char *delim);
 #define strsep tds_strsep
 #endif /* !HAVE_STRSEP */
 
+/* tds_strlcpy - always available */
+TDS_EXPORT size_t tds_strlcpy(char *dest, const char *src, size_t len);
 #if !HAVE_STRLCPY
-size_t tds_strlcpy(char *dest, const char *src, size_t len);
 #undef strlcpy
 #define strlcpy(d,s,l) tds_strlcpy(d,s,l)
 #endif
@@ -102,9 +111,9 @@ typedef struct tds_addrinfo {
 	struct tds_addrinfo *ai_next;
 } tds_addrinfo;
 
-int tds_getaddrinfo(const char *node, const char *service, const struct tds_addrinfo *hints, struct tds_addrinfo **res);
-int tds_getnameinfo(const struct sockaddr *sa, size_t salen, char *host, size_t hostlen, char *serv, size_t servlen, int flags);
-void tds_freeaddrinfo(struct tds_addrinfo *addr);
+TDS_EXPORT int tds_getaddrinfo(const char *node, const char *service, const struct tds_addrinfo *hints, struct tds_addrinfo **res);
+TDS_EXPORT int tds_getnameinfo(const struct sockaddr *sa, size_t salen, char *host, size_t hostlen, char *serv, size_t servlen, int flags);
+TDS_EXPORT void tds_freeaddrinfo(struct tds_addrinfo *addr);
 #define addrinfo tds_addrinfo
 #define getaddrinfo(n,s,h,r) tds_getaddrinfo(n,s,h,r)
 #define getnameinfo(a,b,c,d,e,f,g) tds_getnameinfo(a,b,c,d,e,f,g)
@@ -115,14 +124,15 @@ void tds_freeaddrinfo(struct tds_addrinfo *addr);
 #define AI_FQDN 0
 #endif
 
+/* tds_strlcat - always available */
+TDS_EXPORT size_t tds_strlcat(char *dest, const char *src, size_t len);
 #if !HAVE_STRLCAT
-size_t tds_strlcat(char *dest, const char *src, size_t len);
 #undef strlcat
 #define strlcat(d,s,l) tds_strlcat(d,s,l)
 #endif
 
 #if !HAVE_BASENAME
-char *tds_basename(char *path);
+TDS_EXPORT char *tds_basename(char *path);
 #define basename(path) tds_basename(path)
 #endif
 
@@ -148,7 +158,7 @@ char *tds_basename(char *path);
 # endif
 
 #undef gettimeofday
-int tds_gettimeofday (struct timeval *tv, void *tz);
+TDS_EXPORT int tds_gettimeofday (struct timeval *tv, void *tz);
 #define gettimeofday tds_gettimeofday
 
 /* Older MinGW-w64 versions don't define these flags. */
@@ -169,7 +179,7 @@ int tds_gettimeofday (struct timeval *tv, void *tz);
 
 #if !HAVE_GETOPT
 #undef getopt
-int tds_getopt(int argc, char * const argv[], const char *optstring);
+TDS_EXPORT int tds_getopt(int argc, char * const argv[], const char *optstring);
 #define getopt tds_getopt
 
 extern char *optarg;
@@ -177,19 +187,19 @@ extern int optind, offset, opterr, optreset;
 #endif
 
 #if !HAVE_SOCKETPAIR
-int tds_socketpair(int domain, int type, int protocol, TDS_SYS_SOCKET sv[2]);
+TDS_EXPORT int tds_socketpair(int domain, int type, int protocol, TDS_SYS_SOCKET sv[2]);
 #define socketpair(d,t,p,s) tds_socketpair(d,t,p,s)
 #endif
 
 #if !HAVE_DAEMON
-int tds_daemon(int no_chdir, int no_close);
+TDS_EXPORT int tds_daemon(int no_chdir, int no_close);
 #define daemon(d,c) tds_daemon(d,c)
 #endif
 
 #if !HAVE_SETENV
-int tds_setenv(const char *name, const char *value, int overwrite);
+TDS_EXPORT int tds_setenv(const char *name, const char *value, int overwrite);
 #define setenv(n,v,o) tds_setenv(n,v,o)
-int tds_unsetenv(const char *name);
+TDS_EXPORT int tds_unsetenv(const char *name);
 #define unsetenv(n) tds_unsetenv(n)
 #endif
 

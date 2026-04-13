@@ -49,7 +49,7 @@ else(WIN32)
 	set(add_SRCS challenge.c)
 endif(WIN32)
 
-add_library(tds STATIC
+set(TDS_SOURCES
 	mem.c token.c util.c login.c read.c
         write.c convert.c numeric.c config.c query.c iconv.c
         locale.c vstrbuild.c
@@ -59,6 +59,14 @@ add_library(tds STATIC
         sec_negotiate_gnutls.h sec_negotiate_openssl.h sec_negotiate.c gssapi.c
 	${add_SRCS}
 )
+
+# Object library for use by shared library
+add_library(tds_obj OBJECT ${TDS_SOURCES})
+target_include_directories(tds_obj PUBLIC "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_SOURCE_DIR}/include" "${CMAKE_BINARY_DIR}/include")
+add_dependencies(tds_obj encodings_h)
+set_target_properties(tds_obj PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+add_library(tds STATIC ${TDS_SOURCES})
 target_include_directories(tds PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
 add_dependencies(tds encodings_h)
 if (NOT WIN32)

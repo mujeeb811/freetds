@@ -63,6 +63,7 @@ typedef struct tds_bcpinfo TDSBCPINFO;
 #include <freetds/utils/string.h>
 #include <freetds/utils/path.h>
 #include <freetds/replacements.h>
+#include <freetds/export.h>
 
 #include <freetds/pushvis.h>
 
@@ -1328,16 +1329,16 @@ TDSICONV *tds_iconv_from_collate(TDSCONNECTION * conn, TDS_UCHAR collate[5]);
 /* mem.c */
 void tds_free_socket(TDSSOCKET * tds);
 void tds_free_all_results(TDSSOCKET * tds);
-void tds_free_results(TDSRESULTINFO * res_info);
+TDS_EXPORT void tds_free_results(TDSRESULTINFO * res_info);
 void tds_free_param_results(TDSPARAMINFO * param_info);
 void tds_free_param_result(TDSPARAMINFO * param_info);
 void tds_free_msg(TDSMESSAGE * message);
 void tds_cursor_deallocated(TDSCONNECTION *conn, TDSCURSOR *cursor);
 void tds_release_cursor(TDSCURSOR **pcursor);
 void tds_free_bcp_column_data(BCPCOLDATA * coldata);
-TDSRESULTINFO *tds_alloc_results(TDS_USMALLINT num_cols);
+TDS_EXPORT TDSRESULTINFO *tds_alloc_results(TDS_USMALLINT num_cols);
 TDSCOMPUTEINFO **tds_alloc_compute_results(TDSSOCKET * tds, TDS_USMALLINT num_cols, TDS_USMALLINT by_cols);
-TDSCONTEXT *tds_alloc_context(void * parent);
+TDS_EXPORT TDSCONTEXT *tds_alloc_context(void * parent);
 void tds_free_context(TDSCONTEXT * locale);
 TDSPARAMINFO *tds_alloc_param_result(TDSPARAMINFO * old_param);
 void tds_free_input_params(TDSDYNAMIC * dyn);
@@ -1354,7 +1355,7 @@ char *tds_alloc_client_sqlstate(int msgno);
 char *tds_alloc_lookup_sqlstate(TDSSOCKET * tds, int msgno);
 TDSLOGIN *tds_alloc_login(bool use_environment);
 TDSDYNAMIC *tds_alloc_dynamic(TDSCONNECTION * conn, const char *id);
-void tds_free_login(TDSLOGIN * login);
+TDS_EXPORT void tds_free_login(TDSLOGIN * login);
 TDSLOGIN *tds_init_login(TDSLOGIN * login, TDSLOCALE * locale);
 TDSLOCALE *tds_alloc_locale(void);
 void *tds_alloc_param_data(TDSCOLUMN * curparam);
@@ -1458,7 +1459,7 @@ TDSRET tds_process_tokens(TDSSOCKET * tds, /*@out@*/ TDS_INT * result_type, /*@o
 
 /* data.c */
 void tds_set_param_type(TDSCONNECTION * conn, TDSCOLUMN * curcol, TDS_SERVER_TYPE type);
-void tds_set_column_type(TDSCONNECTION * conn, TDSCOLUMN * curcol, TDS_SERVER_TYPE type);
+TDS_EXPORT void tds_set_column_type(TDSCONNECTION * conn, TDSCOLUMN * curcol, TDS_SERVER_TYPE type);
 #ifdef WORDS_BIGENDIAN
 void tds_swap_datatype(int coltype, void *b);
 #endif
@@ -1476,27 +1477,27 @@ int tds_put_n(TDSSOCKET * tds, const void *buf, size_t n);
 int tds_put_string(TDSSOCKET * tds, const char *buf, int len);
 int tds_put_int(TDSSOCKET * tds, TDS_INT i);
 int tds_put_int8(TDSSOCKET * tds, TDS_INT8 i);
-int tds_put_smallint(TDSSOCKET * tds, TDS_SMALLINT si);
+TDS_EXPORT int tds_put_smallint(TDSSOCKET * tds, TDS_SMALLINT si);
 /** Output a tinyint value */
 #define tds_put_tinyint(tds, ti) tds_put_byte(tds,ti)
-int tds_put_byte(TDSSOCKET * tds, unsigned char c);
-TDSRET tds_flush_packet(TDSSOCKET * tds);
+TDS_EXPORT int tds_put_byte(TDSSOCKET * tds, unsigned char c);
+TDS_EXPORT TDSRET tds_flush_packet(TDSSOCKET * tds);
 int tds_put_buf(TDSSOCKET * tds, const unsigned char *buf, int dsize, int ssize);
 
 
 /* read.c */
-unsigned char tds_get_byte(TDSSOCKET * tds);
+TDS_EXPORT unsigned char tds_get_byte(TDSSOCKET * tds);
 void tds_unget_byte(TDSSOCKET * tds);
 unsigned char tds_peek(TDSSOCKET * tds);
-TDS_USMALLINT tds_get_usmallint(TDSSOCKET * tds);
+TDS_EXPORT TDS_USMALLINT tds_get_usmallint(TDSSOCKET * tds);
 #define tds_get_smallint(tds) ((TDS_SMALLINT) tds_get_usmallint(tds))
-TDS_UINT tds_get_uint(TDSSOCKET * tds);
+TDS_EXPORT TDS_UINT tds_get_uint(TDSSOCKET * tds);
 #define tds_get_int(tds) ((TDS_INT) tds_get_uint(tds))
 TDS_UINT8 tds_get_uint8(TDSSOCKET * tds);
 #define tds_get_int8(tds) ((TDS_INT8) tds_get_uint8(tds))
 size_t tds_get_string(TDSSOCKET * tds, size_t string_len, char *dest, size_t dest_size);
 TDSRET tds_get_char_data(TDSSOCKET * tds, char *dest, size_t wire_size, TDSCOLUMN * curcol);
-bool tds_get_n(TDSSOCKET * tds, /*@out@*/ /*@null@*/ void *dest, size_t n);
+TDS_EXPORT bool tds_get_n(TDSSOCKET * tds, /*@out@*/ /*@null@*/ void *dest, size_t n);
 int tds_get_size_by_type(TDS_SERVER_TYPE servertype);
 DSTR* tds_dstr_get(TDSSOCKET * tds, DSTR * s, size_t len);
 
@@ -1578,7 +1579,7 @@ tds_wakeup_get_fd(const TDSPOLLWAKEUP *wakeup)
 
 
 /* packet.c */
-int tds_read_packet(TDSSOCKET * tds);
+TDS_EXPORT int tds_read_packet(TDSSOCKET * tds);
 TDSRET tds_write_packet(TDSSOCKET * tds, unsigned char final);
 #if ENABLE_ODBC_MARS
 int tds_append_cancel(TDSSOCKET *tds);

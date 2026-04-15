@@ -1,9 +1,9 @@
-# CMakeLists.txt for FreeTDS shared library
-# This creates libfreetds.so/.dll combining tds, tdssrv, replacements, and tdsutils
+# CMakeLists.txt for FreeTDS cslib (Client Server Library)
+# This creates libcs.so/.dll combining tds, tdssrv, replacements, and tdsutils
 
 # Create a shared library that combines all the static libraries
 add_library(freetds SHARED
-    freetds_sharedlib.c
+    freetds_cslib.c
     # Include all source files from the static libraries directly
     $<TARGET_OBJECTS:tds_obj>
     $<TARGET_OBJECTS:tdssrv_obj>
@@ -27,7 +27,7 @@ target_include_directories(freetds
 
 # Set the output name and properties
 set_target_properties(freetds PROPERTIES
-    OUTPUT_NAME "freetds"
+    OUTPUT_NAME "cs"
     VERSION "${VERSION}"
     SOVERSION "${MAJOR}"
 )

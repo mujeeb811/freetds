@@ -1,0 +1,157 @@
+# Dockerfile for building FreeTDS with OpenSSL 3 on RHEL8
+# 
+# Build:
+#   docker build -f build-scripts/Dockerfile.rhel8-openssl3 -t freetds-rhel8-openssl3 .
+#
+# Run (extract built libraries):
+#   docker run --rm -v $(pwd)/output:/output freetds-rhel8-openssl3
+#
+# Or run interactively:
+#   docker run --rm -it freetds-rhel8-openssl3 /bin/bash
+
+FROM registry.access.redhat.com/ubi8/ubi:latest
+
+LABEL maintainer="FreeTDS Build"
+LABEL description="RHEL8 build environment for FreeTDS with OpenSSL 3"
+
+# Set versions
+ARG OPENSSL_VERSION=3.0.13
+ARG GPERF_VERSION=3.1
+ARG FREETDS_REPO=https://github.com/mujeeb811/freetds.git
+ARG FREETDS_BRANCH=sharedlib-v1.5.10
+
+# Enable EPEL repository and install build dependencies
+RUN dnf install -y \
+    https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm \
+    && dnf install -y \
+    gcc \
+    gcc-c++ \
+    make \
+    autoconf \
+    automake \
+    libtool \
+    git \
+    pkgconfig \
+    perl-core \
+    pcre-devel \
+    wget \
+    zlib-devel \
+    unixODBC-devel \
+    glibc-devel \
+    tar \
+    gzip \
+    gettext \
+    && dnf clean all
+
+# Build and install gperf from source
+WORKDIR /tmp
+RUN wget --no-check-certificate https://ftp.gnu.org/pub/gnu/gperf/gperf-${GPERF_VERSION}.tar.gz \
+    && tar -xzf gperf-${GPERF_VERSION}.tar.gz \
+    && cd gperf-${GPERF_VERSION} \
+    && ./configure --prefix=/usr/local \
+    && make -j$(nproc) \
+    && make install \
+    && cd / \
+    && rm -rf /tmp/gperf-${GPERF_VERSION}*
+
+# Download and install gettext m4 macros manually (for AM_ICONV)
+RUN mkdir -p /usr/share/aclocal \
+    && wget -q -O /usr/share/aclocal/iconv.m4 \
+       "https://raw.githubusercontent.com/coreutils/gnulib/master/m4/iconv.m4" \
+    && wget -q -O /usr/share/aclocal/lib-ld.m4 \
+       "https://raw.githubusercontent.com/coreutils/gnulib/master/m4/lib-ld.m4" \
+    && wget -q -O /usr/share/aclocal/lib-link.m4 \
+       "https://raw.githubusercontent.com/coreutils/gnulib/master/m4/lib-link.m4" \
+    && wget -q -O /usr/share/aclocal/lib-prefix.m4 \
+       "https://raw.githubusercontent.com/coreutils/gnulib/master/m4/lib-prefix.m4"
+
+# Build and install OpenSSL 3
+WORKDIR /tmp
+RUN wget --no-check-certificate https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz \
+    && tar -xzf openssl-${OPENSSL_VERSION}.tar.gz \
+    && cd openssl-${OPENSSL_VERSION} \
+    && ./config --prefix=/opt/openssl3 --openssldir=/opt/openssl3 shared zlib \
+    && make -j$(nproc) \
+    && make install \
+    && cd / \
+    && rm -rf /tmp/openssl-${OPENSSL_VERSION}*
+
+# Configure OpenSSL 3 library path (check both lib and lib64)
+RUN if [ -d "/opt/openssl3/lib64" ]; then \
+        echo "/opt/openssl3/lib64" > /etc/ld.so.conf.d/openssl3.conf; \
+    else \
+        echo "/opt/openssl3/lib" > /etc/ld.so.conf.d/openssl3.conf; \
+    fi \
+    && ldconfig
+
+# Set environment variables for OpenSSL 3
+ENV OPENSSL_ROOT=/opt/openssl3
+ENV PKG_CONFIG_PATH=/opt/openssl3/lib64/pkgconfig:/opt/openssl3/lib/pkgconfig
+ENV LD_LIBRARY_PATH=/opt/openssl3/lib64:/opt/openssl3/lib
+ENV PATH=/usr/local/bin:/opt/openssl3/bin:$PATH
+
+# Verify installations
+RUN /opt/openssl3/bin/openssl version && gperf --version
+
+# Clone FreeTDS
+WORKDIR /src
+RUN git clone --branch ${FREETDS_BRANCH} --depth 1 ${FREETDS_REPO} freetds
+
+# Build FreeTDS
+WORKDIR /src/freetds
+
+# Run autoreconf to generate configure script
+RUN autoreconf -i -f
+
+# Create build directory
+RUN mkdir -p /src/freetds/build
+
+WORKDIR /src/freetds/build
+
+# Determine OpenSSL lib path and configure
+RUN OPENSSL_LIB_PATH=$(if [ -d "/opt/openssl3/lib64" ]; then echo "/opt/openssl3/lib64"; else echo "/opt/openssl3/lib"; fi) \
+    && OPENSSL_CFLAGS="-I/opt/openssl3/include" \
+    OPENSSL_LIBS="-L${OPENSSL_LIB_PATH} -lssl -lcrypto" \
+    ../configure \
+        --with-openssl \
+        --enable-sharedlib \
+        --disable-debug \
+        CFLAGS="-O2 -DNDEBUG"
+
+# Build
+RUN make -j$(nproc)
+
+# Create output directory structure
+RUN mkdir -p /build-output/lib \
+    && mkdir -p /build-output/include/freetds
+
+# Copy shared library - copy actual files first, then symlinks
+# List what's in .libs to debug, then copy properly
+RUN echo "=== Contents of .libs directory ===" \
+    && ls -la /src/freetds/build/src/sharedlib/.libs/ \
+    && echo "=== Copying libraries ===" \
+    && cp /src/freetds/build/src/sharedlib/.libs/libfreetds.so.*.*.* /build-output/lib/ 2>/dev/null || true \
+    && cp /src/freetds/build/src/sharedlib/.libs/libfreetds.a /build-output/lib/ 2>/dev/null || true \
+    && cd /build-output/lib \
+    && REAL_LIB=$(ls libfreetds.so.*.*.* 2>/dev/null | head -1) \
+    && if [ -n "$REAL_LIB" ]; then \
+         ln -sf "$REAL_LIB" libfreetds.so.0 && \
+         ln -sf "$REAL_LIB" libfreetds.so; \
+       fi \
+    && echo "=== Output lib contents ===" \
+    && ls -la /build-output/lib/
+
+# Copy headers
+RUN cp /src/freetds/include/*.h /build-output/include/ 2>/dev/null || true
+RUN cp /src/freetds/include/freetds/*.h /build-output/include/freetds/ 2>/dev/null || true
+RUN cp /src/freetds/build/include/config.h /build-output/include/ || true
+RUN cp /src/freetds/build/include/tds_sysdep_public.h /build-output/include/ || true
+RUN cp /src/freetds/build/include/freetds/*.h /build-output/include/freetds/ 2>/dev/null || true
+
+# Verify the library links to OpenSSL 3
+RUN echo "=== Library dependencies ===" \
+    && ldd /build-output/lib/libfreetds.so | grep -E "(ssl|crypto)" \
+    && echo "=== Build successful with OpenSSL 3 ==="
+
+# Default command: copy output to mounted volume
+CMD ["/bin/sh", "-c", "cp -r /build-output/* /output/ 2>/dev/null && echo 'Build artifacts copied to /output/' || echo 'Mount /output to extract build artifacts: docker run -v $(pwd)/output:/output ...'"]

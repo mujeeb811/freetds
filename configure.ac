@@ -972,17 +972,17 @@ else
 	AM_CONDITIONAL(DISTCHECK_BUILD, false)
 fi
 
-AC_ARG_ENABLE(sharedlib,
-	AS_HELP_STRING([--enable-sharedlib], [build combined shared library (libfreetds.so)]))
-AM_CONDITIONAL(BUILD_SHAREDLIB, test "$enable_sharedlib" = "yes")
+AC_ARG_ENABLE(cslib,
+	AS_HELP_STRING([--enable-cslib], [build combined shared library libcs.so (Client Server Library)]))
+AM_CONDITIONAL(BUILD_CSLIB, test "$enable_cslib" = "yes")
 
-# Set visibility flags for shared library (hide symbols by default on GCC)
+# Set visibility flags for cslib (hide symbols by default on GCC)
 # Public symbols must be marked with TDS_EXPORT
-SHAREDLIB_VISIBILITY_CFLAGS=""
+CSLIB_VISIBILITY_CFLAGS=""
 if test "$ac_compiler_gnu" = "yes"; then
-	SHAREDLIB_VISIBILITY_CFLAGS="-fvisibility=hidden"
+	CSLIB_VISIBILITY_CFLAGS="-fvisibility=hidden"
 fi
-AC_SUBST(SHAREDLIB_VISIBILITY_CFLAGS)
+AC_SUBST(CSLIB_VISIBILITY_CFLAGS)
 
 # ------------------------------------------------------------
 # LTLIBOBJS hack (for autoconf-2.53)
@@ -1024,7 +1024,7 @@ AC_CONFIG_FILES(include/freetds/version.h \
 	src/utils/unittests/Makefile \
 	src/server/Makefile \
 	src/pool/Makefile \
-	src/sharedlib/Makefile \
+	src/cslib/Makefile \
 	src/odbc/Makefile \
 	src/odbc/unittests/Makefile \
 	src/apps/Makefile \

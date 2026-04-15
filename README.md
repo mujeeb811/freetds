@@ -77,5 +77,11 @@ The code is split into several pieces.
    configured but is quite stable once configured correctly. Contact
    the list if interested in how to use it.
 
+9. `cslib` directory. Client Server Library — a combined shared library
+   (`libcs.so` on Linux, `cs.dll` on Windows) that bundles `tds`, `tdssrv`,
+   `replacements`, and `tdsutils` into a single linkable artifact.  Enabled
+   via `-DBUILD_SHARED_LIB=ON` (CMake) or `--enable-cslib` (Autotools).
+   Uses `TDS_EXPORT` for public symbol visibility on Linux/GCC.
+
 Please look at doc/getting_started.txt for a description of what is
 going on in the code.

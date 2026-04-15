@@ -1,6 +1,6 @@
 /*
- * FreeTDS shared library entry point
- * This file provides initialization/cleanup for the FreeTDS shared library
+ * FreeTDS cslib (Client Server Library) entry point
+ * This file provides initialization/cleanup for the FreeTDS cslib (libcs)
  * that combines tds, tdssrv, replacements, and tdsutils libraries.
  */
 
@@ -35,13 +35,13 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 #if defined(__GNUC__)
 
 __attribute__((constructor))
-static void freetds_sharedlib_init(void)
+static void freetds_cslib_init(void)
 {
     /* Initialization code when shared library is loaded */
 }
 
 __attribute__((destructor))
-static void freetds_sharedlib_fini(void)
+static void freetds_cslib_fini(void)
 {
     /* Cleanup code when shared library is unloaded */
 }

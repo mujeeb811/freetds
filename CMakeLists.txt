@@ -483,9 +483,9 @@ add_subdirectory(src/apps)
 add_subdirectory(src/server)
 add_subdirectory(src/pool)
 
-# Add shared library (libfreetds.so/DLL) build if enabled
+# Add cslib (Client Server Library) shared library build if enabled
 if(BUILD_SHARED_LIB)
-    add_subdirectory(src/sharedlib)
+    add_subdirectory(src/cslib)
 endif()
 
 configure_file(${CMAKE_BINARY_DIR}/include/config.h.in ${CMAKE_BINARY_DIR}/include/config.h)
